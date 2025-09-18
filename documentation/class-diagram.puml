@@ -1,0 +1,40 @@
+@startuml "MVC Architecture"
+
+class Page {
+    void render()
+}
+note bottom
+    - All your cout and cin happens in render().
+    - Any control structures should strictly relate only to view logic.
+end note
+
+class PageEngine {
+    map<string, Page&> pages
+    void navigate(string name)
+    void register(string name, Page &page)
+}
+
+class Repository {
+    void create(map<string, string> &data)
+    void remove(int id)
+    void update(int id, map<string, string> &data)
+    void delete(int id)
+}
+note bottom
+    - All business logic lives in the CRUD operations.
+    - The Repository here is kind of an amalgamation
+    between the Model and Controller layer.
+    - Any control structures should strictly relate only to business logic.
+end note
+
+PageA <|.. Page
+PageB <|.. Page
+PageEngine o-- PageA
+PageEngine o-- PageB
+
+RepositoryA <|.. Repository
+RepositoryB <|.. Repository
+PageA <-- RepositoryA
+PageB <-- RepositoryB
+
+@enduml
