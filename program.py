@@ -3,6 +3,16 @@ from tkinter import messagebox, PhotoImage
 import sqlite3
 from tkinter import ttk
 import os
+import bcrypt #imported it for secure password hashing and verification
+
+#Added the helper functions for password
+def hash_password(password: str) -> bytes:
+    """Hash a password for storing."""
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+def check_password(password: str, hashed: bytes) -> bool:
+    """Check if the password matches the stored hash."""
+    return bcrypt.checkpw(password.encode('utf-8'), hashed)
 
 class ECommerceApp:
     def __init__(self, root):
@@ -38,8 +48,9 @@ class ECommerceApp:
         c = conn.cursor()
         
         # Create tables
+        # the password should be BLOB since bcrypt hashes are binary
         c.execute('''CREATE TABLE IF NOT EXISTS users
-                    (username TEXT PRIMARY KEY, password TEXT)''')
+            (username TEXT PRIMARY KEY, password BLOB)''')
         
         c.execute('''CREATE TABLE IF NOT EXISTS products
                     (id INTEGER PRIMARY KEY, 
@@ -391,9 +402,11 @@ class ECommerceApp:
         
         conn = sqlite3.connect('ecommerce.db')
         c = conn.cursor()
-        c.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
-        
-        if c.fetchone():
+        c.execute("SELECT password FROM users WHERE username=?", (username,))
+        result = c.fetchone()    
+
+        #compare password with stored bcrypt hash
+        if result and check_password(password, result[0]):
             self.current_user = username
             self.show_store_page()
         else:
@@ -408,7 +421,9 @@ class ECommerceApp:
         conn = sqlite3.connect('ecommerce.db')
         c = conn.cursor()
         try:
-            c.execute("INSERT INTO users VALUES (?, ?)", (username, password))
+            #hash the password before putting into db
+            hashed_pw = hash_password(password)
+            c.execute("INSERT INTO users VALUES (?, ?)", (username, hashed_pw))
             conn.commit()
             messagebox.showinfo("Success", "Registration successful!")
         except sqlite3.IntegrityError:
