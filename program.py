@@ -54,6 +54,7 @@ class ECommerceApp:
                      value REAL)''')
         
         # Check if products already exist
+        # not sure what the number was about but I decided to remove it unless explained, doing this to remove bugs
         c.execute("SELECT COUNT(*) FROM products")
         product_count = c.fetchone()[0]
         
